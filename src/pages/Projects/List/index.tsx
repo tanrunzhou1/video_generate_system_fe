@@ -1,6 +1,7 @@
 import { getErrorMessage } from '@/services/api/client';
 import { listProjects } from '@/services/api/projects';
 import type { ProjectListItem } from '@/services/types';
+import { formatBeijingDateTime } from '@/utils/datetime';
 import { PageContainer } from '@ant-design/pro-components';
 import { history } from '@umijs/max';
 import { Button, Card, Space, Table, Tag, Typography, message } from 'antd';
@@ -82,12 +83,12 @@ const ProjectListPage: React.FC = () => {
     {
       title: '创建时间',
       dataIndex: 'created_at',
-      render: (value: string | undefined) => value || '-',
+      render: (value: string | undefined) => formatBeijingDateTime(value),
     },
     {
       title: '更新时间',
       dataIndex: 'updated_at',
-      render: (value: string | undefined) => value || '-',
+      render: (value: string | undefined) => formatBeijingDateTime(value),
     },
     {
       title: '操作',

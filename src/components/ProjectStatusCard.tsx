@@ -1,4 +1,5 @@
 import type { ProjectStatus } from '@/services/types';
+import { formatBeijingDateTime } from '@/utils/datetime';
 import { Card, Col, Progress, Row, Space, Tag, Typography } from 'antd';
 
 const STATUS_COLORS: Record<string, string> = {
@@ -37,7 +38,7 @@ const ProjectStatusCard: React.FC<ProjectStatusCardProps> = ({ status }) => {
           </Col>
           <Col span={12}>
             <Typography.Text type="secondary">最近更新时间</Typography.Text>
-            <div>{status?.updated_at || '-'}</div>
+            <div>{formatBeijingDateTime(status?.updated_at)}</div>
           </Col>
         </Row>
         <div>

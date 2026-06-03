@@ -32,16 +32,19 @@ export default defineConfig({
       name: '项目准备',
       path: '/projects/:projectId/setup',
       component: './Projects/Setup',
+      hideInMenu: true,
     },
     {
       name: '项目工作台',
       path: '/projects/:projectId',
       component: './Projects/Dashboard',
+      hideInMenu: true,
     },
     {
       name: '角色管理',
       path: '/projects/:projectId/characters',
       component: './Characters/List',
+      hideInMenu: true,
     },
     {
       name: '角色详情',

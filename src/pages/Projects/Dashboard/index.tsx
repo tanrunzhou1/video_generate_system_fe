@@ -11,6 +11,7 @@ import type {
   Project,
   ProjectStatus,
 } from '@/services/types';
+import { formatBeijingDateTime } from '@/utils/datetime';
 import { guardNumericRouteParams } from '@/utils/route';
 import { PageContainer } from '@ant-design/pro-components';
 import { history, useParams } from '@umijs/max';
@@ -145,7 +146,9 @@ const ProjectDashboardPage: React.FC = () => {
                   {project?.target_duration_sec || '-'}
                 </Descriptions.Item>
                 <Descriptions.Item label="更新时间">
-                  {project?.updated_at || status?.updated_at || '-'}
+                  {formatBeijingDateTime(
+                    project?.updated_at || status?.updated_at,
+                  )}
                 </Descriptions.Item>
                 <Descriptions.Item label="描述" span={2}>
                   {project?.description || '-'}
