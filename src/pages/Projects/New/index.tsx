@@ -94,7 +94,9 @@ const ProjectCreatePage: React.FC = () => {
             <Button htmlType="submit" loading={loading} type="primary">
               创建并进入准备页
             </Button>
-            <Button onClick={() => history.push('/home')}>返回首页</Button>
+            <Button onClick={() => history.push('/projects')}>
+              返回项目列表
+            </Button>
           </Space>
         </Form>
       </Card>

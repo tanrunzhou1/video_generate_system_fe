@@ -17,7 +17,7 @@ const TaskLogPage: React.FC = () => {
     const loadData = async () => {
       const routeParams = guardNumericRouteParams(
         [[taskId, 'taskId']],
-        '/home',
+        '/projects',
       );
       if (!routeParams) {
         return;

@@ -117,9 +117,6 @@ const ProjectListPage: React.FC = () => {
     <PageContainer
       content="分页查看历史项目，按创建时间倒序浏览，并快速进入项目工作台或准备页。"
       extra={[
-        <Button key="home" onClick={() => history.push('/home')}>
-          产品概览
-        </Button>,
         <Button
           key="new"
           onClick={() => history.push('/projects/new')}

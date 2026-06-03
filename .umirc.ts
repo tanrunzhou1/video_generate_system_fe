@@ -20,11 +20,6 @@ export default defineConfig({
       component: './Projects/List',
     },
     {
-      name: '产品概览',
-      path: '/home',
-      component: './Home',
-    },
-    {
       name: '新建项目',
       path: '/projects/new',
       component: './Projects/New',
