@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+
+# Commit message verification disabled for this repository.
+exit 0
