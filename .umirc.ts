@@ -15,6 +15,10 @@ export default defineConfig({
       redirect: '/projects',
     },
     {
+      path: '/home',
+      redirect: '/projects',
+    },
+    {
       name: '项目列表',
       path: '/projects',
       component: './Projects/List',

@@ -92,6 +92,11 @@
 
 - 任务日志页
 
+兼容路由：
+
+- 输入 `/home` 时，前端自动重定向到 `/projects`
+- `/home` 仅作为历史兼容地址保留，不再承载独立页面
+
 路由参数说明：
 
 - `projectId`、`characterId`、`shotId`、`taskId` 都表示真实数字 ID
