@@ -7,29 +7,68 @@ export default defineConfig({
   initialState: {},
   request: {},
   layout: {
-    title: '@umijs/max',
+    title: 'AI Video Studio',
   },
   routes: [
     {
       path: '/',
-      redirect: '/home',
+      redirect: '/projects',
     },
     {
-      name: '首页',
+      name: '项目列表',
+      path: '/projects',
+      component: './Projects/List',
+    },
+    {
+      name: '产品概览',
       path: '/home',
       component: './Home',
     },
     {
-      name: '权限演示',
-      path: '/access',
-      component: './Access',
+      name: '新建项目',
+      path: '/projects/new',
+      component: './Projects/New',
     },
     {
-      name: ' CRUD 示例',
-      path: '/table',
-      component: './Table',
+      name: '项目准备',
+      path: '/projects/:projectId/setup',
+      component: './Projects/Setup',
+    },
+    {
+      name: '项目工作台',
+      path: '/projects/:projectId',
+      component: './Projects/Dashboard',
+    },
+    {
+      name: '角色管理',
+      path: '/projects/:projectId/characters',
+      component: './Characters/List',
+    },
+    {
+      name: '角色详情',
+      path: '/projects/:projectId/characters/:characterId',
+      component: './Characters/Detail',
+      hideInMenu: true,
+    },
+    {
+      name: '视觉素材',
+      path: '/projects/:projectId/shots/:shotId/visual-assets',
+      component: './Shots/VisualAssets',
+      hideInMenu: true,
+    },
+    {
+      name: '任务日志',
+      path: '/tasks/:taskId/logs',
+      component: './Tasks/Logs',
+      hideInMenu: true,
     },
   ],
+  proxy: {
+    '/api': {
+      target: 'http://localhost:8000',
+      changeOrigin: true,
+    },
+  },
   npmClient: 'pnpm',
   utoopack: {},
 });

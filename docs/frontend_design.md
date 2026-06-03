@@ -2,130 +2,283 @@
 
 ## 1. 文档范围
 
-本文档仅覆盖当前后端已经提供接口支撑的前端模块，不提前设计尚未落地的后端能力。
+本文档只覆盖当前后端已经实现的能力，目标是让前端可以直接进入开发，不提前设计还没有接口支撑的模块。
 
-当前纳入范围的能力：
+当前已纳入范围：
 
+- 项目列表分页查询
 - 项目创建
-- 素材上传
+- 项目素材上传
 - 项目详情与状态查看
 - 剧本解析触发
 - 任务日志查看
-- 角色档案创建/列表/详情
+- 角色档案创建、列表、详情
 - 镜头视觉素材生成与查询
 
-当前不纳入范围的能力：
+当前暂不纳入范围：
 
-- 语音与字幕
+- 语音生成
+- 字幕生成
 - 背景音乐混合
 - 最终视频合成与导出
-- 项目级素材批量生成
-- 角色编辑、视觉素材人工选中
+- 角色编辑
+- 批量视觉生成
+- 视觉素材人工选中
 
-## 2. 技术选型
+## 2. 前端目标
+
+当前前端 MVP 的主链路是：
+
+1. 查看历史项目列表
+2. 创建项目
+3. 上传剧本与角色素材
+4. 查看项目准备状态
+5. 触发剧本解析
+6. 创建角色档案
+7. 为单个镜头生成视觉素材
+8. 查看任务日志与结果
+
+前端重点不是“功能看起来很多”，而是让用户能顺畅完成这条最小生产链路，并且在失败时能快速定位问题。
+
+## 3. 技术建议
 
 - 框架：React 18
 - 工程框架：`@umijs/max`
 - UI：Ant Design 5 + ProComponents
-- 请求层：`umi-request`
-- 服务状态管理：`@tanstack/react-query`
-- 页面状态：React Hooks
+- 请求层：`umi-request` 或 `axios`
+- 服务端状态管理：`@tanstack/react-query`
 - 表单：Ant Design `Form`
-- 文件上传：Ant Design `Upload`
+- 上传：Ant Design `Upload`
+- 代码高亮日志：`react-syntax-highlighter` 或原生 `pre/code`
 
-## 3. 前端目标
+## 4. 页面结构建议
 
-前端 MVP 的目标不是一次覆盖完整短片生产流程，而是先把“项目创建 -> 素材上传 -> 剧本解析 -> 角色管理 -> 图片生成 -> 结果查看”这条链路打通。
+建议采用以下页面路由：
 
-前端需要重点支持：
+1. `/projects`
 
-1. 让用户顺序完成项目初始化
-2. 让用户看到每一步后台执行结果
-3. 让用户能快速定位失败原因和任务日志
-4. 为后续配音、视频合成预留页面结构
+- 项目列表页
+- 展示历史项目与最近创建项目
 
-## 4. 页面结构
-
-建议采用以下页面结构：
-
-1. `/projects/new`
+2. `/projects/new`
 
 - 项目创建页
-- 用于录入项目名称、描述、风格、目标时长
 
-2. `/projects/:projectId/setup`
+3. `/projects/:projectId/setup`
 
 - 项目准备页
-- 用于上传剧本、人设图、人设文档、风格参考
-- 同页展示项目基础状态与素材摘要
+- 上传剧本、人物图、人设文档、风格参考图
 
-3. `/projects/:projectId`
+4. `/projects/:projectId`
 
 - 项目工作台
-- 展示项目详情、项目状态、最近任务、素材摘要
-- 提供“触发剧本解析”入口
+- 查看项目详情、项目状态、最近任务
+- 触发剧本解析
 
-4. `/projects/:projectId/characters`
+5. `/projects/:projectId/characters`
 
 - 角色管理页
-- 展示角色列表
-- 新建角色档案
+- 角色列表 + 创建角色
 
-5. `/projects/:projectId/characters/:characterId`
+6. `/projects/:projectId/characters/:characterId`
 
 - 角色详情页
-- 展示角色完整人设、参考图、约束信息
-
-6. `/projects/:projectId/shots`
-
-- 镜头列表页
-- 当前后端没有单独镜头列表接口，MVP 可先通过项目详情页跳转到镜头操作区域，后续补独立列表接口
 
 7. `/projects/:projectId/shots/:shotId/visual-assets`
 
-- 镜头视觉素材页
-- 生成视觉素材
-- 查看该镜头已生成素材
+- 单镜头视觉素材页
 
 8. `/tasks/:taskId/logs`
 
 - 任务日志页
-- 查看任务执行日志与错误信息
 
-## 5. 页面职责
+路由参数说明：
 
-### 5.1 项目创建页
+- `projectId`、`characterId`、`shotId`、`taskId` 都表示真实数字 ID
+- `:projectId`、`:characterId`、`:shotId`、`:taskId` 只是前端路由占位写法，不能原样传给后端接口
+- 例如：
+  - 页面路由写法：`/projects/:projectId`
+  - 实际页面地址：`/projects/1`
+  - 实际接口地址：`/api/v1/projects/1`
 
-功能：
+说明：
 
-- 新建项目
-- 成功后跳转到项目准备页
+- 当前后端还没有“镜头列表接口”，所以前端先不要单独开发完整的镜头列表页。
+- `shot_id` 当前主要来自剧本解析后的数据库结果，前端短期内可以通过后续补充接口或调试数据接入。
 
-核心字段：
+## 5. 通用接口约定
 
-- `name`
-- `description`
-- `style_preset`
-- `target_duration_sec`
+### 5.1 基础返回结构
+
+除 `GET /health` 外，当前业务接口统一返回：
+
+```json
+{
+  "code": 0,
+  "message": "ok",
+  "data": {}
+}
+```
+
+前端判断建议：
+
+- `HTTP 2xx` 且 `code === 0`：业务成功
+- `HTTP 4xx/5xx`：业务失败
+- 出现 `detail` 时，优先展示后端返回的 `detail`
+
+### 5.2 错误处理建议
+
+- `400`：参数错误、前置条件不满足
+- `404`：项目、角色、任务、镜头、文件不存在
+- `409`：命名冲突，例如项目重名、角色重名
+- `500`：后端内部错误
+
+### 5.3 前端基础 TypeScript 类型建议
+
+```ts
+export type ApiResponse<T> = {
+  code: number;
+  message: string;
+  data: T;
+};
+```
+
+## 6. 页面与接口映射
+
+重要说明：
+
+- 文档中的 `/projects/:projectId`、`/tasks/:taskId/logs` 等写法仅用于描述前端路由模式
+- 调用后端接口时，必须把占位参数替换成真实数字 ID
+- 错误示例：`/api/v1/projects/:projectId`
+- 正确示例：`/api/v1/projects/1`
+
+### 6.1 项目创建页 `/projects/new`
+
+### 6.0 项目列表页 `/projects`
+
+页面目标：
+
+- 分页查看系统中已创建项目
+- 按创建时间倒序浏览最近项目
+- 从列表快速进入项目详情或继续执行后续流程
+- 提供“新建项目”入口
+
+接口：
+
+- `GET /api/v1/projects`
+
+Query：
+
+- `page`: 可选，正整数，默认 `1`
+- `page_size`: 可选，正整数，默认 `10`
+
+成功返回：
+
+```json
+{
+  "code": 0,
+  "message": "ok",
+  "data": {
+    "page": 1,
+    "page_size": 10,
+    "total": 23,
+    "items": [
+      {
+        "project_id": 12,
+        "name": "校园短片A",
+        "description": "第一版演示项目",
+        "target_duration_sec": 60,
+        "style_preset": "cinematic",
+        "status": "created",
+        "created_at": "2026-06-03T10:00:00",
+        "updated_at": "2026-06-03T10:05:00"
+      }
+    ]
+  }
+}
+```
+
+常见失败：
+
+- `400 page must be greater than or equal to 1`
+- `400 page_size must be greater than or equal to 1`
+
+前端交互建议：
+
+- 页面可作为项目首页或“历史项目”主入口
+- 列表建议展示：
+  - 项目名称
+  - 项目状态
+  - 目标时长
+  - 风格预设
+  - 创建时间
+  - 更新时间
+- 点击行或卡片跳转到 `/projects/{project_id}`
+- 页面顶部提供“新建项目”按钮，跳转 `/projects/new`
+- MVP 阶段仅做基础分页，不做搜索、筛选和排序切换
+
+### 6.1 项目创建页 `/projects/new`
+
+页面目标：
+
+- 创建项目
+- 创建成功后跳转到项目准备页
 
 接口：
 
 - `POST /api/v1/projects`
 
-交互要求：
+请求体：
 
-- 项目名重复时提示 `409`
-- 创建成功后保存 `project_id`
+```json
+{
+  "name": "校园短片A",
+  "description": "第一版演示项目",
+  "target_duration_sec": 60,
+  "style_preset": "cinematic"
+}
+```
 
-### 5.2 项目准备页
+字段说明：
 
-功能：
+- `name`: 必填，项目名，不能与已有项目重名
+- `description`: 选填，项目描述
+- `target_duration_sec`: 必填，目标时长，范围 `10-600`
+- `style_preset`: 选填，风格预设
 
-- 上传剧本
-- 上传人物设定图
-- 上传人物设定文档
-- 可选上传风格参考图
-- 查看当前素材上传结果
+成功返回：
+
+```json
+{
+  "code": 0,
+  "message": "ok",
+  "data": {
+    "project_id": 1,
+    "name": "校园短片A",
+    "status": "created",
+    "target_duration_sec": 60,
+    "created_at": "2026-06-03T12:00:00"
+  }
+}
+```
+
+常见失败：
+
+- `400 project name cannot be blank`
+- `409 project name already exists`
+
+前端交互建议：
+
+- 项目名输入框要做必填校验
+- 命中 `409` 时，直接在项目名输入框下方提示“项目名称已存在”
+- 成功后跳转到 `/projects/{project_id}/setup`
+
+### 6.2 项目准备页 `/projects/:projectId/setup`
+
+页面目标：
+
+- 上传剧本、人物设定图、人设文档、风格参考图
+- 展示当前项目素材摘要
 
 接口：
 
@@ -133,23 +286,169 @@
 - `GET /api/v1/projects/{project_id}`
 - `GET /api/v1/projects/{project_id}/status`
 
-交互要求：
+#### 6.2.1 上传素材
 
-- 上传前展示必填说明
-- 上传成功后刷新项目详情和状态
-- 页面中显示素材摘要：
-  - `script_file_count`
-  - `persona_doc_count`
-  - `character_image_count`
-  - `style_reference_count`
+接口：
 
-### 5.3 项目工作台
+- `POST /api/v1/projects/{project_id}/assets`
 
-功能：
+请求类型：
+
+- `multipart/form-data`
+
+表单字段：
+
+- `script_file`: 必填，单文件
+- `persona_doc`: 必填，单文件
+- `character_images`: 必填，多文件
+- `style_reference`: 选填，单文件
+
+前端上传示例：
+
+```ts
+const formData = new FormData();
+formData.append('script_file', scriptFile);
+formData.append('persona_doc', personaDoc);
+characterImages.forEach((file) => formData.append('character_images', file));
+if (styleReference) {
+  formData.append('style_reference', styleReference);
+}
+```
+
+成功返回：
+
+```json
+{
+  "code": 0,
+  "message": "ok",
+  "data": {
+    "project_id": 1,
+    "uploaded": [
+      {
+        "asset_id": 1,
+        "asset_type": "script_file",
+        "file_path": "storage/projects/1/script_file/demo.md"
+      },
+      {
+        "asset_id": 2,
+        "asset_type": "persona_doc",
+        "file_path": "storage/projects/1/persona_doc/persona.md"
+      },
+      {
+        "asset_id": 3,
+        "asset_type": "character_image",
+        "file_path": "storage/projects/1/character_image/a.jpg"
+      }
+    ],
+    "failed": []
+  }
+}
+```
+
+常见失败：
+
+- `404 project not found`
+- 文件缺失时，FastAPI 会直接返回 `422`
+
+前端交互建议：
+
+- 使用 `Upload` 组件分别维护：
+  - 剧本文件
+  - 人设文档
+  - 角色参考图列表
+  - 风格参考图
+- 提交成功后刷新项目详情和状态
+- `uploaded` 结果建议直接在页面显示，帮助用户确认哪些文件已经入库
+
+#### 6.2.2 查询项目详情
+
+接口：
+
+- `GET /api/v1/projects/{project_id}`
+
+成功返回：
+
+```json
+{
+  "code": 0,
+  "message": "ok",
+  "data": {
+    "project_id": 1,
+    "name": "校园短片A",
+    "description": "第一版演示项目",
+    "target_duration_sec": 60,
+    "style_preset": "cinematic",
+    "status": "created",
+    "created_at": "2026-06-03T12:00:00",
+    "updated_at": "2026-06-03T12:10:00",
+    "asset_summary": {
+      "script_file_count": 1,
+      "persona_doc_count": 1,
+      "character_image_count": 2,
+      "style_reference_count": 1
+    },
+    "latest_task": null,
+    "final_video": null
+  }
+}
+```
+
+字段说明：
+
+- `asset_summary`: 当前最适合前端展示“准备度”的摘要信息
+- `latest_task`: 最近一次任务摘要，可能为空
+- `final_video`: 当前通常为空，因为后端还没有完成视频合成模块
+
+`latest_task` 非空示例：
+
+```json
+{
+  "task_id": 7,
+  "stage": "script_parse",
+  "status": "succeeded",
+  "retry_count": 0,
+  "error_code": null,
+  "error_message": null,
+  "log_file_path": "logs/tasks/project_1/task_7.log"
+}
+```
+
+#### 6.2.3 查询项目状态
+
+接口：
+
+- `GET /api/v1/projects/{project_id}/status`
+
+成功返回：
+
+```json
+{
+  "code": 0,
+  "message": "ok",
+  "data": {
+    "project_id": 1,
+    "status": "created",
+    "current_stage": "script_parse",
+    "progress": null,
+    "retry_count": 0,
+    "last_error_code": null,
+    "last_error_message": null,
+    "updated_at": "2026-06-03T12:10:00"
+  }
+}
+```
+
+前端交互建议：
+
+- 项目准备页顶部可以放一个“准备状态卡片”
+- 当 `script_file_count >= 1`、`persona_doc_count >= 1`、`character_image_count >= 1` 时，可以提示用户进入下一步
+
+### 6.3 项目工作台 `/projects/:projectId`
+
+页面目标：
 
 - 查看项目基础信息
-- 查看项目状态
-- 查看最近任务摘要
+- 查看项目最新任务状态
 - 手动触发剧本解析
 
 接口：
@@ -158,23 +457,101 @@
 - `GET /api/v1/projects/{project_id}/status`
 - `POST /api/v1/projects/{project_id}/parse-script`
 
-交互要求：
+#### 6.3.1 触发剧本解析
 
-- 显示项目状态 `created/running/succeeded/failed`
-- 若存在最近任务，展示：
-  - `task_id`
-  - `stage`
-  - `status`
-  - `error_message`
-  - 日志跳转入口
-- 点击“触发剧本解析”后展示结果：
+接口：
+
+- `POST /api/v1/projects/{project_id}/parse-script`
+
+请求体：
+
+- 无
+
+成功返回：
+
+```json
+{
+  "code": 0,
+  "message": "ok",
+  "data": {
+    "project_id": 1,
+    "task_id": 7,
+    "status": "succeeded",
+    "workflow_status": "script_parsed",
+    "shot_count": 6,
+    "log_file_path": "logs/tasks/project_1/task_7.log"
+  }
+}
+```
+
+常见失败：
+
+- `400 script_file asset not found`
+- `404 script file not found`
+- `400 script file is empty`
+- `404 project not found`
+
+前端交互建议：
+
+- 触发按钮建议加 loading
+- 成功后刷新：
+  - 项目详情
+  - 项目状态
+- 页面上显示：
   - `task_id`
   - `workflow_status`
   - `shot_count`
+- 若返回了 `task_id`，提供“查看任务日志”按钮，跳转 `/tasks/{taskId}/logs`
 
-### 5.4 角色管理页
+### 6.4 任务日志页 `/tasks/:taskId/logs`
 
-功能：
+页面目标：
+
+- 查看任务执行日志
+- 查看任务错误摘要
+
+接口：
+
+- `GET /api/v1/tasks/{task_id}/logs`
+
+成功返回：
+
+```json
+{
+  "code": 0,
+  "message": "ok",
+  "data": {
+    "task_id": 7,
+    "project_id": 1,
+    "stage": "script_parse",
+    "status": "succeeded",
+    "retry_count": 0,
+    "error_code": null,
+    "error_message": null,
+    "log_file_path": "logs/tasks/project_1/task_7.log",
+    "log_content": "[2026-06-03 12:20:00] task created\n[2026-06-03 12:20:03] task succeeded\n"
+  }
+}
+```
+
+常见失败：
+
+- `404 task not found`
+- `404 task log file path not found`
+- `404 task log file not found`
+
+前端交互建议：
+
+- `log_content` 用等宽字体、滚动容器展示
+- 页面头部同时展示：
+  - `stage`
+  - `status`
+  - `retry_count`
+  - `error_message`
+
+### 6.5 角色管理页 `/projects/:projectId/characters`
+
+页面目标：
 
 - 查看角色列表
 - 创建角色档案
@@ -184,204 +561,466 @@
 - `GET /api/v1/projects/{project_id}/characters`
 - `POST /api/v1/projects/{project_id}/characters`
 
-创建角色字段：
+#### 6.5.1 创建角色
 
-- `name`
-- `persona_text`
-- `voice_style`
-- `reference_image_asset_ids`
-- `prompt_constraints`
-- `seed_policy`
+请求体：
 
-交互要求：
+```json
+{
+  "name": "主角",
+  "persona_text": "17岁女高中生，冷静，行动力强。",
+  "voice_style": "young_female_calm",
+  "reference_image_asset_ids": [3, 4],
+  "prompt_constraints": {
+    "positive": ["黑色短发", "校服", "干净构图"],
+    "negative": ["多余手指", "面部崩坏"]
+  },
+  "seed_policy": {
+    "mode": "fixed",
+    "seed": 123456
+  }
+}
+```
 
-- 角色创建表单可分成：
+字段说明：
+
+- `reference_image_asset_ids` 必须引用当前项目内已上传的 `character_image` 素材
+- `prompt_constraints` 和 `seed_policy` 当前后端不做强结构校验，前端可以按 JSON 编辑器或结构化表单实现
+
+成功返回：
+
+```json
+{
+  "code": 0,
+  "message": "ok",
+  "data": {
+    "character_id": 1,
+    "project_id": 1,
+    "name": "主角",
+    "voice_style": "young_female_calm",
+    "reference_image_paths": [
+      "storage/projects/1/character_image/a.jpg",
+      "storage/projects/1/character_image/b.jpg"
+    ],
+    "created_at": "2026-06-03T13:00:00"
+  }
+}
+```
+
+常见失败：
+
+- `404 project not found`
+- `400 character name cannot be blank`
+- `400 persona_text cannot be blank`
+- `400 voice_style cannot be blank`
+- `400 reference_image_asset_ids cannot be empty`
+- `400 invalid character_image asset reference`
+- `409 character name already exists in project`
+
+前端交互建议：
+
+- 角色创建表单建议拆成四块：
   - 基础信息
   - 参考图选择
   - 提示词约束
-  - seed 策略
-- 创建成功后刷新列表
-- 同项目角色名重复时提示 `409`
+  - Seed 策略
+- 参考图选择最好从项目已上传素材中选，不建议手填 asset id
 
-### 5.5 角色详情页
+#### 6.5.2 查询角色列表
 
-功能：
+成功返回：
 
-- 查看单个角色完整信息
+```json
+{
+  "code": 0,
+  "message": "ok",
+  "data": {
+    "project_id": 1,
+    "items": [
+      {
+        "character_id": 1,
+        "name": "主角",
+        "voice_style": "young_female_calm",
+        "reference_image_count": 2,
+        "created_at": "2026-06-03T13:00:00"
+      }
+    ]
+  }
+}
+```
+
+前端交互建议：
+
+- 列表页展示：
+  - 角色名
+  - 音色风格
+  - 参考图数量
+  - 创建时间
+- 点击行跳转到详情页
+
+### 6.6 角色详情页 `/projects/:projectId/characters/:characterId`
+
+页面目标：
+
+- 展示单个角色完整信息
 
 接口：
 
 - `GET /api/v1/projects/{project_id}/characters/{character_id}`
 
-展示内容：
+成功返回：
 
-- 角色名
-- 人设文本
-- 音色风格
-- 参考图列表
-- 正向约束
-- 负向约束
-- seed 策略
+```json
+{
+  "code": 0,
+  "message": "ok",
+  "data": {
+    "character_id": 1,
+    "project_id": 1,
+    "name": "主角",
+    "persona_text": "17岁女高中生，冷静，行动力强。",
+    "voice_style": "young_female_calm",
+    "reference_image_paths": [
+      "storage/projects/1/character_image/a.jpg",
+      "storage/projects/1/character_image/b.jpg"
+    ],
+    "prompt_constraints": {
+      "positive": ["黑色短发", "校服", "干净构图"],
+      "negative": ["多余手指", "面部崩坏"]
+    },
+    "seed_policy": {
+      "mode": "fixed",
+      "seed": 123456
+    }
+  }
+}
+```
 
-### 5.6 镜头视觉素材页
+常见失败：
 
-功能：
+- `404 project not found`
+- `404 character not found`
 
-- 为指定镜头生成图片素材
-- 查看当前镜头已生成的图片素材列表
+前端交互建议：
+
+- `prompt_constraints` 与 `seed_policy` 适合用 JSON Viewer 展示
+- `reference_image_paths` 当前是本地路径，前端暂时只能作为文本展示，等后端补静态资源访问后再接图片预览
+
+### 6.7 镜头视觉素材页 `/projects/:projectId/shots/:shotId/visual-assets`
+
+页面目标：
+
+- 为单个镜头生成视觉素材
+- 查看该镜头已生成的视觉素材列表
 
 接口：
 
 - `POST /api/v1/projects/{project_id}/shots/{shot_id}/visual-assets`
 - `GET /api/v1/projects/{project_id}/shots/{shot_id}/visual-assets`
 
-生成表单字段：
+#### 6.7.1 生成视觉素材
 
-- `provider`
-- `resolution`
-- `override_prompt`
+请求体：
 
-当前固定支持：
+```json
+{
+  "provider": "qwen-image-2.0",
+  "resolution": "720p",
+  "override_prompt": "黄昏校园操场，电影感，主角站在跑道边，逆光。"
+}
+```
 
-- `provider = qwen-image-2.0`
-- `resolution` 可选：
+字段说明：
+
+- `provider`: 当前建议固定传 `qwen-image-2.0`
+- `resolution`: 选填，可选值：
   - `360p`
   - `480p`
   - `720p`
   - `1080p`
+- `override_prompt`: 选填，用于手动覆盖镜头默认提示词
 
-展示内容：
+成功返回：
 
-- 素材图片预览
-- `provider`
-- `resolution`
-- `prompt_used`
-- `seed`
-- `file_path`
+```json
+{
+  "code": 0,
+  "message": "ok",
+  "data": {
+    "asset_id": 11,
+    "project_id": 1,
+    "shot_id": 5,
+    "asset_type": "image",
+    "provider": "qwen-image-2.0",
+    "resolution": "720p",
+    "file_path": "storage/projects/1/visual/shot_5_asset_11.png",
+    "prompt_used": "黄昏校园操场，电影感，主角站在跑道边，逆光。",
+    "seed": 123456,
+    "is_selected": false
+  }
+}
+```
 
-交互要求：
+常见失败：
 
-- 生成成功后刷新素材列表
-- 同时提示该次生成已写入任务日志
+- `404 project not found`
+- `404 shot not found`
+- `400 unsupported provider`
+- `400 unsupported resolution`
+- `400 shot visual_prompt is empty`
+- 其他 Qwen-Image 调用失败信息
 
-### 5.7 任务日志页
+前端交互建议：
 
-功能：
+- `provider` 在 MVP 阶段可以不做下拉，直接写死
+- `resolution` 用单选按钮组或 Select
+- `override_prompt` 用多行输入框
+- 成功后立即刷新素材列表
 
-- 查看任务执行日志
-- 查看任务错误摘要
+#### 6.7.2 查询镜头视觉素材列表
+
+成功返回：
+
+```json
+{
+  "code": 0,
+  "message": "ok",
+  "data": {
+    "project_id": 1,
+    "shot_id": 5,
+    "items": [
+      {
+        "asset_id": 11,
+        "project_id": 1,
+        "shot_id": 5,
+        "asset_type": "image",
+        "provider": "qwen-image-2.0",
+        "resolution": "720p",
+        "file_path": "storage/projects/1/visual/shot_5_asset_11.png",
+        "prompt_used": "黄昏校园操场，电影感，主角站在跑道边，逆光。",
+        "seed": 123456,
+        "is_selected": false
+      }
+    ]
+  }
+}
+```
+
+前端交互建议：
+
+- 列表建议展示：
+  - 缩略图占位
+  - `provider`
+  - `resolution`
+  - `seed`
+  - `prompt_used`
+  - `file_path`
+- 当前由于还没有图片静态访问接口，先把 `file_path` 和元信息展示出来即可
+
+### 6.8 健康检查接口
 
 接口：
 
-- `GET /api/v1/tasks/{task_id}/logs`
+- `GET /health`
 
-展示内容：
+成功返回：
 
-- `task_id`
-- `project_id`
-- `stage`
-- `status`
-- `retry_count`
-- `error_code`
-- `error_message`
-- `log_content`
+```json
+{
+  "status": "ok",
+  "env": "dev",
+  "storage_dir": "storage"
+}
+```
 
-交互要求：
+用途：
 
-- `log_content` 采用等宽字体和可滚动代码块展示
-- 若任务或日志不存在，展示空状态或错误提示
+- 前端本地联调时可用来判断服务是否启动成功
+- 不建议作为业务页面主接口
 
-## 6. API 映射
+## 7. 前端类型定义建议
 
-### 6.1 项目接口
+建议在 `src/services/types.ts` 中定义以下核心类型。
 
-- `POST /api/v1/projects`
-- `GET /api/v1/projects/{project_id}`
-- `GET /api/v1/projects/{project_id}/status`
-- `POST /api/v1/projects/{project_id}/assets`
-- `POST /api/v1/projects/{project_id}/parse-script`
+### 7.1 ProjectListItem
 
-### 6.2 角色接口
+```ts
+export type ProjectListItem = {
+  project_id: number;
+  name: string;
+  description: string | null;
+  target_duration_sec: number;
+  style_preset: string | null;
+  status: 'created' | 'running' | 'succeeded' | 'failed';
+  created_at: string;
+  updated_at: string;
+};
+```
 
-- `POST /api/v1/projects/{project_id}/characters`
-- `GET /api/v1/projects/{project_id}/characters`
-- `GET /api/v1/projects/{project_id}/characters/{character_id}`
+### 7.2 ProjectListResponse
 
-### 6.3 视觉生成接口
+```ts
+export type ProjectListResponse = {
+  page: number;
+  page_size: number;
+  total: number;
+  items: ProjectListItem[];
+};
+```
 
-- `POST /api/v1/projects/{project_id}/shots/{shot_id}/visual-assets`
-- `GET /api/v1/projects/{project_id}/shots/{shot_id}/visual-assets`
+### 7.3 ProjectDetail
 
-### 6.4 任务接口
+```ts
+export type ProjectDetail = {
+  project_id: number;
+  name: string;
+  description: string | null;
+  target_duration_sec: number;
+  style_preset: string | null;
+  status: 'created' | 'running' | 'succeeded' | 'failed';
+  created_at: string;
+  updated_at: string;
+  asset_summary: {
+    script_file_count: number;
+    persona_doc_count: number;
+    character_image_count: number;
+    style_reference_count: number;
+  };
+  latest_task: {
+    task_id: number;
+    stage: string;
+    status: string;
+    retry_count: number;
+    error_code: string | null;
+    error_message: string | null;
+    log_file_path: string | null;
+  } | null;
+  final_video: {
+    video_id: number;
+    resolution: string | null;
+    duration_sec: number | null;
+    file_path: string;
+    cover_image_path: string | null;
+    created_at: string;
+  } | null;
+};
+```
 
-- `GET /api/v1/tasks/{task_id}/logs`
+### 7.4 ProjectStatus
 
-## 7. 前端数据模型建议
+```ts
+export type ProjectStatus = {
+  project_id: number;
+  status: 'created' | 'running' | 'succeeded' | 'failed';
+  current_stage: string | null;
+  progress: number | null;
+  retry_count: number;
+  last_error_code: string | null;
+  last_error_message: string | null;
+  updated_at: string;
+};
+```
 
-建议在前端 `src/services/types.ts` 中定义这些核心类型：
+### 7.5 CharacterProfile
 
-### 7.1 Project
+```ts
+export type CharacterProfile = {
+  character_id: number;
+  project_id: number;
+  name: string;
+  persona_text: string;
+  voice_style: string;
+  reference_image_paths: string[];
+  prompt_constraints: Record<string, unknown>;
+  seed_policy: Record<string, unknown>;
+};
+```
 
-- `project_id`
-- `name`
-- `description`
-- `target_duration_sec`
-- `style_preset`
-- `status`
-- `created_at`
-- `updated_at`
+### 7.6 VisualAsset
 
-### 7.2 ProjectStatus
+```ts
+export type VisualAsset = {
+  asset_id: number;
+  project_id: number;
+  shot_id: number;
+  asset_type: string;
+  provider: string;
+  resolution: string;
+  file_path: string;
+  prompt_used: string;
+  seed: number | null;
+  is_selected: boolean;
+};
+```
 
-- `project_id`
-- `status`
-- `current_stage`
-- `progress`
-- `retry_count`
-- `last_error_code`
-- `last_error_message`
-- `updated_at`
+### 7.7 TaskLog
 
-### 7.3 CharacterProfile
+```ts
+export type TaskLog = {
+  task_id: number;
+  project_id: number;
+  stage: string;
+  status: string;
+  retry_count: number;
+  error_code: string | null;
+  error_message: string | null;
+  log_file_path: string;
+  log_content: string;
+};
+```
 
-- `character_id`
-- `project_id`
-- `name`
-- `persona_text`
-- `voice_style`
-- `reference_image_paths`
-- `prompt_constraints`
-- `seed_policy`
+## 8. 服务层组织建议
 
-### 7.4 VisualAsset
+建议按资源维度拆分前端请求封装：
 
-- `asset_id`
-- `project_id`
-- `shot_id`
-- `asset_type`
-- `provider`
-- `resolution`
-- `file_path`
-- `prompt_used`
-- `seed`
-- `is_selected`
+1. `src/services/project.ts`
 
-### 7.5 TaskLog
+- 查询项目列表
+- 创建项目
+- 查询项目详情
+- 查询项目状态
+- 上传素材
+- 触发剧本解析
 
-- `task_id`
-- `project_id`
-- `stage`
-- `status`
-- `retry_count`
-- `error_code`
-- `error_message`
-- `log_file_path`
-- `log_content`
+2. `src/services/character.ts`
 
-## 8. 推荐组件拆分
+- 创建角色
+- 查询角色列表
+- 查询角色详情
 
-### 8.1 页面级组件
+3. `src/services/task.ts`
 
+- 查询任务日志
+
+4. `src/services/visual.ts`
+
+- 生成视觉素材
+- 查询视觉素材列表
+
+## 9. React Query 建议
+
+推荐 query key：
+
+- `["project", projectId]`
+- `["project-status", projectId]`
+- `["characters", projectId]`
+- `["character", projectId, characterId]`
+- `["visual-assets", projectId, shotId]`
+- `["task-log", taskId]`
+
+推荐失效策略：
+
+- 创建项目成功后：跳页，不需要失效
+- 上传素材成功后：失效 `["project", projectId]` 和 `["project-status", projectId]`
+- 触发剧本解析成功后：失效 `["project", projectId]` 和 `["project-status", projectId]`
+- 创建角色成功后：失效 `["characters", projectId]`
+- 生成视觉素材成功后：失效 `["visual-assets", projectId, shotId]`
+
+## 10. 推荐组件拆分
+
+页面级组件：
+
+- `ProjectListPage`
 - `ProjectCreatePage`
 - `ProjectSetupPage`
 - `ProjectDashboardPage`
@@ -390,7 +1029,7 @@
 - `ShotVisualAssetPage`
 - `TaskLogPage`
 
-### 8.2 业务组件
+业务组件：
 
 - `ProjectBasicForm`
 - `ProjectAssetUploadPanel`
@@ -402,84 +1041,49 @@
 - `VisualAssetGallery`
 - `TaskLogViewer`
 
-## 9. 状态管理建议
+## 11. 当前已知限制
 
-建议按“服务端状态优先”的思路组织：
+1. 后端还没有独立“镜头列表接口”
 
-1. React Query 管理服务端数据
+- 前端暂时不能完整做镜头管理页
 
-- 项目详情
-- 项目状态
-- 角色列表
-- 角色详情
-- 镜头视觉素材列表
-- 任务日志
+2. 图片文件当前只保存为本地路径
 
-2. 本地状态仅管理页面交互
+- 还没有静态资源访问 URL
+- 前端暂时无法稳定预览本地图片文件
 
-- 表单输入
-- 当前选中的文件
-- Drawer / Modal 开关
-- 当前激活 tab
+3. 角色档案没有编辑接口
 
-推荐 query key：
+- 当前只能创建、列表、详情
 
-- `["project", projectId]`
-- `["project-status", projectId]`
-- `["characters", projectId]`
-- `["character", projectId, characterId]`
-- `["visual-assets", projectId, shotId]`
-- `["task-log", taskId]`
+4. 视觉素材目前只支持单镜头单次生成
 
-## 10. 页面流程建议
+- 还没有批量生成接口
 
-推荐前端默认流程：
+5. `prompt_constraints` 和 `seed_policy` 目前是弱约束 JSON
 
-1. 创建项目
-2. 上传素材
-3. 进入项目工作台
-4. 触发剧本解析
-5. 创建角色档案
-6. 为镜头生成图片素材
-7. 查看任务日志和结果
+- 前端可以先做宽松 JSON 结构
 
-## 11. 异常处理建议
+## 12. 推荐开发顺序
 
-统一处理：
+建议前端按下面顺序推进，这样每一步都能单独联调：
 
-- `400`：参数错误，表单内提示
-- `404`：资源不存在，页面空状态
-- `409`：冲突提示，例如项目名重复、角色名重复
-- `500`：通用错误提示
+1. 项目列表页
+2. 项目创建页
+3. 项目准备页
+4. 项目工作台
+5. 任务日志页
+6. 角色管理页
+7. 角色详情页
+8. 单镜头视觉素材页
 
-建议前端统一封装：
+## 13. 后续扩展方向
 
-- `code === 0` 视为业务成功
-- 否则显示 `message`
-- 若后端使用 `HTTPException.detail`，优先展示 `detail`
+等后端继续补接口后，前端可以自然扩展：
 
-## 12. 当前已知限制
-
-1. 后端暂未提供“项目镜头列表”独立接口
-
-- 前端短期内需要从剧本解析结果或后续补充接口中获取 `shot_id`
-
-2. 视觉生成目前只支持单镜头单次生成
-
-- 没有批量生成接口
-
-3. 角色档案目前没有编辑接口
-
-4. 素材目前仅本地文件存储
-
-- 前端展示图片时，后续可能需要补静态资源访问方案
-
-## 13. 后续前端扩展方向
-
-在后端接口补齐后，前端可继续扩展：
-
-1. 镜头列表与分镜编辑页
-2. 角色档案编辑页
-3. 视觉素材人工选中页
-4. 语音字幕工作台
-5. 最终视频预览与导出页
+1. 镜头列表页
+2. 分镜详情页
+3. 角色编辑页
+4. 视觉素材选中页
+5. 语音字幕工作台
+6. 最终视频预览与导出页
