@@ -1,42 +1,57 @@
-# 前端设计文档（基于当前已实现后端）
+# 前端设计文档（基于当前已实现后端 + 已确认 Spec）
 
 ## 1. 文档范围
 
-本文档只覆盖当前后端已经实现的能力，目标是让前端可以直接进入开发，不提前设计还没有接口支撑的模块。
+本文档分两层描述前端设计：
+
+1. 已实现后端能力
+
+- 前端现在就可以直接联调
+
+2. 已确认 Spec 但后端待实现能力
+
+- 前端可以先完成页面信息架构、类型定义、交互设计与接口封装草稿
+- 等后端实现后直接联调
 
 当前已纳入范围：
 
-- 项目列表分页查询
 - 项目创建
+- 项目列表分页查询
 - 项目素材上传
 - 项目详情与状态查看
 - 剧本解析触发
+- 镜头列表查询（已确认 Spec）
 - 任务日志查看
 - 角色档案创建、列表、详情
 - 镜头视觉素材生成与查询
+- 镜头语音生成与查询（已确认 Spec）
+- 镜头字幕生成与查询（已确认 Spec）
+- 项目 BGM 登记与查询（已确认 Spec）
+- 镜头音频混音（已确认 Spec）
+- 项目成片导出、列表与详情（已确认 Spec）
 
 当前暂不纳入范围：
 
-- 语音生成
-- 字幕生成
-- 背景音乐混合
-- 最终视频合成与导出
 - 角色编辑
 - 批量视觉生成
 - 视觉素材人工选中
+- 项目级自动工作流编排页
 
 ## 2. 前端目标
 
 当前前端 MVP 的主链路是：
 
-1. 查看历史项目列表
-2. 创建项目
-3. 上传剧本与角色素材
-4. 查看项目准备状态
-5. 触发剧本解析
+1. 分页查看项目列表 / 创建项目
+2. 上传剧本与角色素材
+3. 查看项目准备状态
+4. 触发剧本解析
+5. 查询镜头列表
 6. 创建角色档案
 7. 为单个镜头生成视觉素材
-8. 查看任务日志与结果
+8. 为单个镜头生成语音与字幕
+9. 为单个镜头选择 BGM 并混音
+10. 触发项目成片导出
+11. 查看任务日志、成片列表与成片详情
 
 前端重点不是“功能看起来很多”，而是让用户能顺畅完成这条最小生产链路，并且在失败时能快速定位问题。
 
@@ -58,7 +73,7 @@
 1. `/projects`
 
 - 项目列表页
-- 展示历史项目与最近创建项目
+- 分页查看历史项目
 
 2. `/projects/new`
 
@@ -75,41 +90,56 @@
 - 查看项目详情、项目状态、最近任务
 - 触发剧本解析
 
-5. `/projects/:projectId/characters`
+5. `/projects/:projectId/shots`
+
+- 镜头列表页
+- 统一进入视觉、语音、字幕、混音页面
+
+6. `/projects/:projectId/characters`
 
 - 角色管理页
 - 角色列表 + 创建角色
 
-6. `/projects/:projectId/characters/:characterId`
+7. `/projects/:projectId/characters/:characterId`
 
 - 角色详情页
 
-7. `/projects/:projectId/shots/:shotId/visual-assets`
+8. `/projects/:projectId/shots/:shotId/visual-assets`
 
 - 单镜头视觉素材页
 
-8. `/tasks/:taskId/logs`
+9. `/projects/:projectId/shots/:shotId/voice-assets`
+
+- 单镜头语音素材页
+
+10. `/projects/:projectId/shots/:shotId/subtitle-segments`
+
+- 单镜头字幕页
+
+11. `/projects/:projectId/shots/:shotId/audio-mix`
+
+- 单镜头混音页
+
+12. `/projects/:projectId/bgm-assets`
+
+- 项目背景音乐管理页
+
+13. `/projects/:projectId/final-videos`
+
+- 项目成片列表页
+
+14. `/projects/:projectId/final-videos/:videoId`
+
+- 成片详情页
+
+15. `/tasks/:taskId/logs`
 
 - 任务日志页
 
-兼容路由：
-
-- 输入 `/home` 时，前端自动重定向到 `/projects`
-- `/home` 仅作为历史兼容地址保留，不再承载独立页面
-
-路由参数说明：
-
-- `projectId`、`characterId`、`shotId`、`taskId` 都表示真实数字 ID
-- `:projectId`、`:characterId`、`:shotId`、`:taskId` 只是前端路由占位写法，不能原样传给后端接口
-- 例如：
-  - 页面路由写法：`/projects/:projectId`
-  - 实际页面地址：`/projects/1`
-  - 实际接口地址：`/api/v1/projects/1`
-
 说明：
 
-- 当前后端还没有“镜头列表接口”，所以前端先不要单独开发完整的镜头列表页。
-- `shot_id` 当前主要来自剧本解析后的数据库结果，前端短期内可以通过后续补充接口或调试数据接入。
+- `UC025` 已定义项目镜头列表接口，前端应按该接口设计镜头工作台。
+- 语音、字幕、BGM、混音、成片导出目前是 `SPEC_READY`，建议先完成页面骨架与类型定义。
 
 ## 5. 通用接口约定
 
@@ -150,32 +180,22 @@ export type ApiResponse<T> = {
 
 ## 6. 页面与接口映射
 
-重要说明：
-
-- 文档中的 `/projects/:projectId`、`/tasks/:taskId/logs` 等写法仅用于描述前端路由模式
-- 调用后端接口时，必须把占位参数替换成真实数字 ID
-- 错误示例：`/api/v1/projects/:projectId`
-- 正确示例：`/api/v1/projects/1`
-
-### 6.1 项目创建页 `/projects/new`
-
-### 6.0 项目列表页 `/projects`
+### 6.1 项目列表页 `/projects`
 
 页面目标：
 
-- 分页查看系统中已创建项目
-- 按创建时间倒序浏览最近项目
-- 从列表快速进入项目详情或继续执行后续流程
-- 提供“新建项目”入口
+- 分页查看已创建项目
+- 进入项目详情或准备页
+- 提供“创建项目”入口
 
 接口：
 
-- `GET /api/v1/projects`
+- `GET /api/v1/projects?page=1&page_size=10`
 
-Query：
+请求参数：
 
-- `page`: 可选，正整数，默认 `1`
-- `page_size`: 可选，正整数，默认 `10`
+- `page`：页码，默认 `1`
+- `page_size`：每页条数，默认 `10`
 
 成功返回：
 
@@ -195,34 +215,27 @@ Query：
         "target_duration_sec": 60,
         "style_preset": "cinematic",
         "status": "created",
-        "created_at": "2026-06-03T10:00:00",
-        "updated_at": "2026-06-03T10:05:00"
+        "created_at": "2026-06-18T18:00:00+08:00",
+        "updated_at": "2026-06-18T18:05:00+08:00"
       }
     ]
   }
 }
 ```
 
-常见失败：
-
-- `400 page must be greater than or equal to 1`
-- `400 page_size must be greater than or equal to 1`
-
 前端交互建议：
 
-- 页面作为项目主入口与历史项目列表页
-- 列表建议展示：
+- 使用表格或卡片列表展示：
   - 项目名称
   - 项目状态
   - 目标时长
-  - 风格预设
+  - 风格
   - 创建时间
   - 更新时间
-- 点击行或卡片跳转到 `/projects/{project_id}`
-- 页面顶部提供“新建项目”按钮，跳转 `/projects/new`
-- MVP 阶段仅做基础分页，不做搜索、筛选和排序切换
+- 点击列表项进入 `/projects/:projectId`
+- 右上角提供“新建项目”按钮
 
-### 6.1 项目创建页 `/projects/new`
+### 6.2 项目创建页 `/projects/new`
 
 页面目标：
 
@@ -278,7 +291,7 @@ Query：
 - 命中 `409` 时，直接在项目名输入框下方提示“项目名称已存在”
 - 成功后跳转到 `/projects/{project_id}/setup`
 
-### 6.2 项目准备页 `/projects/:projectId/setup`
+### 6.3 项目准备页 `/projects/:projectId/setup`
 
 页面目标：
 
@@ -448,7 +461,7 @@ if (styleReference) {
 - 项目准备页顶部可以放一个“准备状态卡片”
 - 当 `script_file_count >= 1`、`persona_doc_count >= 1`、`character_image_count >= 1` 时，可以提示用户进入下一步
 
-### 6.3 项目工作台 `/projects/:projectId`
+### 6.4 项目工作台 `/projects/:projectId`
 
 页面目标：
 
@@ -508,7 +521,7 @@ if (styleReference) {
   - `shot_count`
 - 若返回了 `task_id`，提供“查看任务日志”按钮，跳转 `/tasks/{taskId}/logs`
 
-### 6.4 任务日志页 `/tasks/:taskId/logs`
+### 6.5 任务日志页 `/tasks/:taskId/logs`
 
 页面目标：
 
@@ -554,7 +567,7 @@ if (styleReference) {
   - `retry_count`
   - `error_message`
 
-### 6.5 角色管理页 `/projects/:projectId/characters`
+### 6.6 角色管理页 `/projects/:projectId/characters`
 
 页面目标：
 
@@ -663,7 +676,7 @@ if (styleReference) {
   - 创建时间
 - 点击行跳转到详情页
 
-### 6.6 角色详情页 `/projects/:projectId/characters/:characterId`
+### 6.7 角色详情页 `/projects/:projectId/characters/:characterId`
 
 页面目标：
 
@@ -711,7 +724,60 @@ if (styleReference) {
 - `prompt_constraints` 与 `seed_policy` 适合用 JSON Viewer 展示
 - `reference_image_paths` 当前是本地路径，前端暂时只能作为文本展示，等后端补静态资源访问后再接图片预览
 
-### 6.7 镜头视觉素材页 `/projects/:projectId/shots/:shotId/visual-assets`
+### 6.8 镜头列表页 `/projects/:projectId/shots`
+
+页面目标：
+
+- 展示项目下全部镜头
+- 作为视觉、语音、字幕、混音、导出的统一入口页
+
+接口：
+
+- `GET /api/v1/projects/{project_id}/shots`
+
+成功返回：
+
+```json
+{
+  "code": 0,
+  "message": "ok",
+  "data": {
+    "project_id": 12,
+    "items": [
+      {
+        "shot_id": 33,
+        "scene_id": 7,
+        "scene_index": 1,
+        "shot_index": 1,
+        "duration_sec": 5.0,
+        "characters": ["主角"],
+        "camera_instruction": "中景，跟拍",
+        "visual_prompt": "夜景街道，主角独自行走",
+        "status": "planned",
+        "dialogue_count": 2
+      }
+    ]
+  }
+}
+```
+
+前端交互建议：
+
+- 使用时间线或分组表格展示：
+  - `scene_index`
+  - `shot_index`
+  - `duration_sec`
+  - `characters`
+  - `status`
+  - `dialogue_count`
+- 每条镜头提供操作入口：
+  - 生成视觉
+  - 生成语音
+  - 生成字幕
+  - 混音
+- `dialogue_count === 0` 时，禁用语音生成按钮并提示“当前镜头无台词”
+
+### 6.9 镜头视觉素材页 `/projects/:projectId/shots/:shotId/visual-assets`
 
 页面目标：
 
@@ -723,7 +789,7 @@ if (styleReference) {
 - `POST /api/v1/projects/{project_id}/shots/{shot_id}/visual-assets`
 - `GET /api/v1/projects/{project_id}/shots/{shot_id}/visual-assets`
 
-#### 6.7.1 生成视觉素材
+#### 6.9.1 生成视觉素材
 
 请求体：
 
@@ -782,7 +848,7 @@ if (styleReference) {
 - `override_prompt` 用多行输入框
 - 成功后立即刷新素材列表
 
-#### 6.7.2 查询镜头视觉素材列表
+#### 6.9.2 查询镜头视觉素材列表
 
 成功返回：
 
@@ -822,7 +888,238 @@ if (styleReference) {
   - `file_path`
 - 当前由于还没有图片静态访问接口，先把 `file_path` 和元信息展示出来即可
 
-### 6.8 健康检查接口
+### 6.10 镜头语音素材页 `/projects/:projectId/shots/:shotId/voice-assets`
+
+页面目标：
+
+- 基于已落库的 `shot_dialogue` 生成镜头语音
+- 查看当前镜头已生成的语音素材列表
+
+接口：
+
+- `POST /api/v1/projects/{project_id}/shots/{shot_id}/voice-assets`
+- `GET /api/v1/projects/{project_id}/shots/{shot_id}/voice-assets`
+
+#### 6.10.1 生成镜头语音
+
+请求体：
+
+```json
+{
+  "provider": "xtts-v2",
+  "source": "shot_dialogues"
+}
+```
+
+说明：
+
+- 前端不再手工录入台词
+- 台词来源来自 `UC006` 落库后的 `shot_dialogue`
+
+成功返回重点字段：
+
+- `provider`
+- `source`
+- `items[].dialogue_id`
+- `items[].character_id`
+- `items[].line_text`
+- `items[].audio_path`
+- `items[].start_time_sec`
+- `items[].end_time_sec`
+
+前端交互建议：
+
+- 页面顶部先展示镜头台词摘要
+- 角色档案未准备完整时，禁用语音生成并提示“角色名尚未映射到角色档案”
+- 生成成功后刷新语音列表
+
+#### 6.10.2 查询镜头语音列表
+
+列表建议展示：
+
+- `character_id`
+- `line_text`
+- `voice_provider`
+- `start_time_sec`
+- `end_time_sec`
+- `audio_path`
+
+说明：
+
+- 当前还没有稳定的音频访问 URL，可先展示路径和时间轴
+
+### 6.11 镜头字幕页 `/projects/:projectId/shots/:shotId/subtitle-segments`
+
+页面目标：
+
+- 基于镜头语音结果生成字幕片段
+- 查看字幕时间轴
+
+接口：
+
+- `POST /api/v1/projects/{project_id}/shots/{shot_id}/subtitle-segments`
+- `GET /api/v1/projects/{project_id}/shots/{shot_id}/subtitle-segments`
+
+#### 6.11.1 生成字幕
+
+请求体：
+
+```json
+{
+  "source": "voice_assets"
+}
+```
+
+前端交互建议：
+
+- 只有当语音列表非空时才允许点击“生成字幕”
+- 生成成功后刷新字幕列表
+
+#### 6.11.2 查询字幕列表
+
+列表建议展示：
+
+- `text`
+- `start_time_sec`
+- `end_time_sec`
+
+说明：
+
+- 当前返回结构化字幕片段，不直接返回 `.srt` 文本
+
+### 6.12 项目背景音乐管理页 `/projects/:projectId/bgm-assets`
+
+页面目标：
+
+- 登记项目背景音乐素材
+- 查看项目已登记的 BGM 列表
+
+接口：
+
+- `POST /api/v1/projects/{project_id}/bgm-assets`
+- `GET /api/v1/projects/{project_id}/bgm-assets`
+
+#### 6.12.1 创建 BGM 记录
+
+请求体：
+
+```json
+{
+  "file_path": "storage/projects/12/bgm/calm_theme.mp3",
+  "mood_tag": "calm",
+  "start_time_sec": 0.0,
+  "end_time_sec": 18.0,
+  "gain_db": -6.0
+}
+```
+
+前端交互建议：
+
+- MVP 阶段先做“登记路径”表单，不做文件上传组件耦合
+- 表单建议字段：
+  - 文件路径
+  - 情绪标签
+  - 开始时间
+  - 结束时间
+  - 默认增益
+
+#### 6.12.2 查询 BGM 列表
+
+列表建议展示：
+
+- `mood_tag`
+- `start_time_sec`
+- `end_time_sec`
+- `gain_db`
+- `file_path`
+
+### 6.13 镜头混音页 `/projects/:projectId/shots/:shotId/audio-mix`
+
+页面目标：
+
+- 选择 BGM 为单镜头生成混音结果
+- 查看混音输出路径和版本信息
+
+接口：
+
+- `POST /api/v1/projects/{project_id}/shots/{shot_id}/audio-mix`
+
+请求体：
+
+```json
+{
+  "bgm_asset_id": 9,
+  "ducking_gain_db": -10.0,
+  "fade_in_sec": 0.3,
+  "fade_out_sec": 0.5
+}
+```
+
+前端交互建议：
+
+- 从项目 BGM 列表中选择 `bgm_asset_id`
+- 默认值建议：
+  - `ducking_gain_db = -10`
+  - `fade_in_sec = 0.3`
+  - `fade_out_sec = 0.5`
+- 混音成功后展示：
+  - `mixed_audio_path`
+  - `voice_asset_ids`
+  - 本次混音参数
+
+### 6.14 成片导出与结果页
+
+#### 6.14.1 导出项目成片 `/projects/:projectId/final-videos`
+
+接口：
+
+- `POST /api/v1/projects/{project_id}/final-videos`
+- `GET /api/v1/projects/{project_id}/final-videos`
+
+导出请求体：
+
+```json
+{
+  "resolution": "720p",
+  "include_subtitles": true,
+  "transition_mode": "none"
+}
+```
+
+前端交互建议：
+
+- 页面入口可以放在项目工作台，也可以放在单独“导出成片”Tab
+- 表单先暴露最小字段：
+  - 分辨率
+  - 是否叠加字幕
+- 提交成功后跳转任务日志页，或停留当前页轮询项目详情/成片列表
+
+#### 6.14.2 查询项目成片列表 `/projects/:projectId/final-videos`
+
+列表建议展示：
+
+- `video_id`
+- `resolution`
+- `duration_sec`
+- `created_at`
+- `file_path`
+- `cover_image_path`
+
+#### 6.14.3 查询成片详情 `/projects/:projectId/final-videos/:videoId`
+
+详情页建议展示：
+
+- 成片基础信息
+- 封面图路径
+- 视频路径
+- 导出时间
+
+说明：
+
+- 当前仍返回本地文件路径，不直接返回可播放 URL
+- 前端详情页先按“结果元数据页”设计，不强依赖原生播放器
+
+### 6.15 健康检查接口
 
 接口：
 
@@ -847,33 +1144,7 @@ if (styleReference) {
 
 建议在 `src/services/types.ts` 中定义以下核心类型。
 
-### 7.1 ProjectListItem
-
-```ts
-export type ProjectListItem = {
-  project_id: number;
-  name: string;
-  description: string | null;
-  target_duration_sec: number;
-  style_preset: string | null;
-  status: 'created' | 'running' | 'succeeded' | 'failed';
-  created_at: string;
-  updated_at: string;
-};
-```
-
-### 7.2 ProjectListResponse
-
-```ts
-export type ProjectListResponse = {
-  page: number;
-  page_size: number;
-  total: number;
-  items: ProjectListItem[];
-};
-```
-
-### 7.3 ProjectDetail
+### 7.1 ProjectDetail
 
 ```ts
 export type ProjectDetail = {
@@ -911,7 +1182,7 @@ export type ProjectDetail = {
 };
 ```
 
-### 7.4 ProjectStatus
+### 7.2 ProjectStatus
 
 ```ts
 export type ProjectStatus = {
@@ -923,6 +1194,38 @@ export type ProjectStatus = {
   last_error_code: string | null;
   last_error_message: string | null;
   updated_at: string;
+};
+```
+
+### 7.3 ProjectListItem
+
+```ts
+export type ProjectListItem = {
+  project_id: number;
+  name: string;
+  description: string | null;
+  target_duration_sec: number;
+  style_preset: string | null;
+  status: 'created' | 'running' | 'succeeded' | 'failed';
+  created_at: string;
+  updated_at: string;
+};
+```
+
+### 7.4 ShotListItem
+
+```ts
+export type ShotListItem = {
+  shot_id: number;
+  scene_id: number;
+  scene_index: number;
+  shot_index: number;
+  duration_sec: number;
+  characters: string[];
+  camera_instruction: string | null;
+  visual_prompt: string;
+  status: string;
+  dialogue_count: number;
 };
 ```
 
@@ -958,7 +1261,75 @@ export type VisualAsset = {
 };
 ```
 
-### 7.7 TaskLog
+### 7.7 VoiceAsset
+
+```ts
+export type VoiceAsset = {
+  voice_asset_id: number;
+  character_id: number;
+  dialogue_id?: number;
+  line_text: string;
+  voice_provider: string;
+  audio_path: string;
+  start_time_sec: number;
+  end_time_sec: number;
+};
+```
+
+### 7.8 SubtitleSegment
+
+```ts
+export type SubtitleSegment = {
+  subtitle_segment_id: number;
+  text: string;
+  start_time_sec: number;
+  end_time_sec: number;
+};
+```
+
+### 7.9 BgmAsset
+
+```ts
+export type BgmAsset = {
+  bgm_asset_id: number;
+  file_path: string;
+  mood_tag: string | null;
+  start_time_sec: number;
+  end_time_sec: number;
+  gain_db: number;
+};
+```
+
+### 7.10 AudioMixResult
+
+```ts
+export type AudioMixResult = {
+  project_id: number;
+  shot_id: number;
+  bgm_asset_id: number;
+  voice_asset_ids: number[];
+  mixed_audio_path: string;
+  ducking_gain_db: number;
+  fade_in_sec: number;
+  fade_out_sec: number;
+};
+```
+
+### 7.11 FinalVideo
+
+```ts
+export type FinalVideo = {
+  video_id: number;
+  project_id?: number;
+  resolution: string;
+  duration_sec: number;
+  file_path: string;
+  cover_image_path: string | null;
+  created_at: string;
+};
+```
+
+### 7.12 TaskLog
 
 ```ts
 export type TaskLog = {
@@ -986,6 +1357,10 @@ export type TaskLog = {
 - 查询项目状态
 - 上传素材
 - 触发剧本解析
+- 查询镜头列表
+- 触发成片导出
+- 查询成片列表
+- 查询成片详情
 
 2. `src/services/character.ts`
 
@@ -1002,15 +1377,36 @@ export type TaskLog = {
 - 生成视觉素材
 - 查询视觉素材列表
 
+5. `src/services/voice.ts`
+
+- 生成镜头语音
+- 查询镜头语音列表
+- 生成字幕
+- 查询字幕列表
+
+6. `src/services/audio.ts`
+
+- 创建 BGM 记录
+- 查询 BGM 列表
+- 生成镜头混音
+
 ## 9. React Query 建议
 
 推荐 query key：
 
+- `["projects", page, pageSize]`
 - `["project", projectId]`
 - `["project-status", projectId]`
+- `["shots", projectId]`
 - `["characters", projectId]`
 - `["character", projectId, characterId]`
 - `["visual-assets", projectId, shotId]`
+- `["voice-assets", projectId, shotId]`
+- `["subtitle-segments", projectId, shotId]`
+- `["bgm-assets", projectId]`
+- `["audio-mix", projectId, shotId]`
+- `["final-videos", projectId]`
+- `["final-video", projectId, videoId]`
 - `["task-log", taskId]`
 
 推荐失效策略：
@@ -1018,8 +1414,14 @@ export type TaskLog = {
 - 创建项目成功后：跳页，不需要失效
 - 上传素材成功后：失效 `["project", projectId]` 和 `["project-status", projectId]`
 - 触发剧本解析成功后：失效 `["project", projectId]` 和 `["project-status", projectId]`
+- 触发剧本解析成功后：额外失效 `["shots", projectId]`
 - 创建角色成功后：失效 `["characters", projectId]`
 - 生成视觉素材成功后：失效 `["visual-assets", projectId, shotId]`
+- 生成语音成功后：失效 `["voice-assets", projectId, shotId]`
+- 生成字幕成功后：失效 `["subtitle-segments", projectId, shotId]`
+- 创建 BGM 成功后：失效 `["bgm-assets", projectId]`
+- 混音成功后：视 UI 结构失效 `["audio-mix", projectId, shotId]` 或刷新当前页数据
+- 触发成片导出成功后：失效 `["project", projectId]`，并在导出完成后刷新 `["final-videos", projectId]`
 
 ## 10. 推荐组件拆分
 
@@ -1029,9 +1431,16 @@ export type TaskLog = {
 - `ProjectCreatePage`
 - `ProjectSetupPage`
 - `ProjectDashboardPage`
+- `ShotListPage`
 - `CharacterListPage`
 - `CharacterDetailPage`
 - `ShotVisualAssetPage`
+- `ShotVoiceAssetPage`
+- `ShotSubtitlePage`
+- `ProjectBgmAssetPage`
+- `ShotAudioMixPage`
+- `FinalVideoListPage`
+- `FinalVideoDetailPage`
 - `TaskLogPage`
 
 业务组件：
@@ -1044,13 +1453,21 @@ export type TaskLog = {
 - `CharacterConstraintEditor`
 - `VisualGenerateForm`
 - `VisualAssetGallery`
+- `ShotDialoguePreview`
+- `VoiceAssetList`
+- `SubtitleSegmentList`
+- `BgmAssetForm`
+- `BgmAssetTable`
+- `AudioMixForm`
+- `FinalVideoExportForm`
+- `FinalVideoTable`
 - `TaskLogViewer`
 
 ## 11. 当前已知限制
 
-1. 后端还没有独立“镜头列表接口”
+1. `UC025` 镜头列表目前已完成 Spec，但后端实现可能尚未落地
 
-- 前端暂时不能完整做镜头管理页
+- 前端可以先完成镜头页结构和类型定义
 
 2. 图片文件当前只保存为本地路径
 
@@ -1065,9 +1482,19 @@ export type TaskLog = {
 
 - 还没有批量生成接口
 
-5. `prompt_constraints` 和 `seed_policy` 目前是弱约束 JSON
+5. 语音、字幕、BGM、混音、成片导出目前多数仍处于 `SPEC_READY`
+
+- 前端可以先按接口契约开发页面骨架和 service 层
+- 联调前需要再次确认真实实现状态
+
+6. `prompt_constraints` 和 `seed_policy` 目前是弱约束 JSON
 
 - 前端可以先做宽松 JSON 结构
+
+7. 音频、视频、图片当前大多返回本地文件路径
+
+- 还没有统一的静态资源访问方案
+- 页面设计上先按“元数据展示优先”处理
 
 ## 12. 推荐开发顺序
 
@@ -1077,18 +1504,23 @@ export type TaskLog = {
 2. 项目创建页
 3. 项目准备页
 4. 项目工作台
-5. 任务日志页
+5. 镜头列表页
 6. 角色管理页
 7. 角色详情页
 8. 单镜头视觉素材页
+9. 单镜头语音与字幕页
+10. 项目 BGM 管理页
+11. 单镜头混音页
+12. 成片导出与结果页
+13. 任务日志页
 
 ## 13. 后续扩展方向
 
 等后端继续补接口后，前端可以自然扩展：
 
-1. 镜头列表页
-2. 分镜详情页
-3. 角色编辑页
-4. 视觉素材选中页
-5. 语音字幕工作台
-6. 最终视频预览与导出页
+1. 分镜详情编辑页
+2. 角色编辑页
+3. 视觉素材选中页
+4. 混音版本选择页
+5. 最终视频预览与播放页
+6. 项目级自动工作流看板
